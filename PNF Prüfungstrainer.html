@@ -1,0 +1,400 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>PNF Prüfungstrainer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: eine schmale Lernspalte, unten fixierte Modusleiste; Diagonalen (Spiral-Diagonal-Muster) als einziges Motiv */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --fg:#17202e; --muted:#5b6678; --line:#d9dfe8;
+  --accent:#2b54c9; --on-accent:#ffffff; --accent-soft:#e3e9fb; --good:#1f7a4d; --good-soft:#dcf1e5; --bad:#b4372b; --bad-soft:#f8e1de;
+  --display:"Familjen Grotesk","Helvetica Neue",Arial,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#10141c; --surface:#18202c; --fg:#e7ecf4; --muted:#9aa6b8; --line:#2a3546;
+  --accent:#7d9bff; --on-accent:#0d1220; --accent-soft:#1f2b4a; --good:#5ccf93; --good-soft:#163526; --bad:#ff8a7d; --bad-soft:#3a1d1a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10141c; --surface:#18202c; --fg:#e7ecf4; --muted:#9aa6b8; --line:#2a3546;
+  --accent:#7d9bff; --on-accent:#0d1220; --accent-soft:#1f2b4a; --good:#5ccf93; --good-soft:#163526; --bad:#ff8a7d; --bad-soft:#3a1d1a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:20px calc(110px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-direction:column;gap:6px}
+header h1{font-family:var(--display);font-weight:700;font-size:clamp(26px,7vw,36px);line-height:1.05;margin:0;letter-spacing:-.01em}
+header h1 span{color:var(--accent)}
+.sub{margin:0;color:var(--muted);font-size:15px}
+.diag{height:6px;background:repeating-linear-gradient(135deg,var(--accent) 0 3px,transparent 3px 9px);opacity:.55;border-radius:3px}
+.label{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h2.sec{font:700 20px var(--display);margin:0}
+
+/* Modusleiste unten */
+nav.modes{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);
+  padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));
+  padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+nav.modes .in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+nav.modes button{border:0;background:transparent;color:var(--muted);border-radius:12px;padding:8px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font:600 14px var(--display)}
+nav.modes svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.modes button[aria-current="true"]{background:var(--accent-soft);color:var(--accent)}
+
+/* Themen-Kacheln */
+.topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.topic{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:8px;color:var(--fg);font:inherit;min-width:0}
+.topic:hover{border-color:var(--accent)}
+.topic b{font:700 17px var(--display)}
+.topic .meta{display:flex;justify-content:space-between;font:500 12px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.mini{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.mini i{display:block;height:100%;background:var(--good)}
+
+/* Lernansicht */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.back{background:none;border:0;color:var(--accent);font:600 16px var(--display);cursor:pointer;padding:6px 0;display:flex;align-items:center;gap:4px}
+.switch{display:flex;align-items:center;gap:8px;font-size:15px;cursor:pointer;user-select:none}
+.switch input{width:20px;height:20px;accent-color:var(--accent)}
+.learn{display:flex;flex-direction:column;gap:10px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.item .qq{font:700 17px/1.3 var(--display);margin:0}
+.item .aa ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:3px}
+.item .aa p{margin:0}
+.item.hide .aa{display:none}
+.reveal{display:none;align-self:flex-start;border:1px dashed var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:8px 12px;font:600 14px var(--display);cursor:pointer}
+.item.hide .reveal{display:block}
+.knew{align-self:flex-start;font:500 12px var(--mono);color:var(--good)}
+
+/* Filter */
+details.filter{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+details.filter summary{cursor:pointer;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px;list-style:none;font:600 16px var(--display)}
+details.filter summary::-webkit-details-marker{display:none}
+details.filter summary .label{font-size:12px}
+details.filter[open] summary{border-bottom:1px solid var(--line)}
+.fbody{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:15px var(--body);border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:999px;padding:7px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.chip small{font-family:var(--mono);color:var(--muted);margin-left:4px}
+.link{background:none;border:0;color:var(--accent);font:15px var(--body);cursor:pointer;padding:0;align-self:flex-start}
+
+.progress{display:flex;align-items:center;gap:10px;font:500 13px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px 20px;display:flex;flex-direction:column;gap:14px;min-height:260px;position:relative;overflow:hidden}
+.card.tap{cursor:pointer}
+.card::before{content:"";position:absolute;right:-30px;top:-30px;width:90px;height:90px;background:repeating-linear-gradient(135deg,var(--accent-soft) 0 4px,transparent 4px 10px);pointer-events:none}
+.cat{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);position:relative}
+.q{font-family:var(--display);font-weight:700;font-size:22px;line-height:1.25;margin:0;text-wrap:balance;position:relative}
+.ans{border-top:1px dashed var(--line);padding-top:14px}
+.ans ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.ans p{margin:0}
+.taphint{margin-top:auto;color:var(--muted);font-size:14px;text-align:center}
+.btn{font:600 16px var(--display);border-radius:12px;padding:14px 16px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.good{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+.btn.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.btn.full{width:100%}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{text-align:left;font:16px/1.4 var(--body);border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;gap:10px}
+.opt .l{font:500 13px var(--mono);color:var(--muted);padding-top:2px}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.right{background:var(--good-soft);border-color:var(--good)}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.opt:disabled{cursor:default}
+.feedback{font:700 16px var(--display)}
+.feedback.ok{color:var(--good)} .feedback.no{color:var(--bad)}
+button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.done{text-align:center;align-items:center;justify-content:center}
+.big{font:700 52px var(--display);color:var(--accent);line-height:1;font-variant-numeric:tabular-nums}
+.hint{color:var(--muted);font-size:14px;margin:0}
+.stack{display:flex;flex-direction:column;gap:12px}
+.kbd{font:500 12px var(--mono);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+@media (hover:none){.desk{display:none}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="label">Prüfungsvorbereitung</div>
+    <h1>PNF <span>Prüfungstrainer</span></h1>
+    <div class="diag"></div>
+  </header>
+  <main id="stage"></main>
+</div>
+
+<nav class="modes"><div class="in">
+  <button data-m="learn" aria-current="true"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/><path d="M8 7h7M8 11h7"/></svg>Lernen</button>
+  <button data-m="cards" aria-current="false"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg>Karteikarten</button>
+  <button data-m="quiz" aria-current="false"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14"/><path d="M12 17.5v.01"/></svg>Quiz</button>
+</div></nav>
+
+<script>
+const C = [
+// [Kategorie, Frage, Antwort (String oder Array)]
+["Konzept","Welche Bestandteile umfasst das PNF-Konzept?",["PNF-Philosophie","Grundprinzipien","Techniken","Vitalfunktionen","Mattenprogramm","Gangschule","Pattern","Allgemeine Reha"]],
+
+["Neurophysiologie","Nenne die 6 neurophysiologischen Prinzipien.",["Immediate Induktion","Reziproke Hemmung","Stretchreaktion","Sukzessive Induktion","Postisometrische Relaxation","Summation der Reize"]],
+["Neurophysiologie","Immediate Induktion","Zielorientierte Bereitschaft, eine Funktion durchzuführen"],
+["Neurophysiologie","Reziproke Hemmung","Intramuskuläre und intermuskuläre Koordination"],
+["Neurophysiologie","Stretchreaktion","Dehnreiz am Muskel = verstärkte Kontraktionsbereitschaft"],
+["Neurophysiologie","Sukzessive Induktion","Kontraktion der Antagonisten = erhöhte Reizbarkeit der Agonisten"],
+["Neurophysiologie","Postisometrische Relaxation","Nach statischer Belastung kommt es zur Entspannung des Muskels"],
+["Neurophysiologie","Summation der Reize","Räumliche und zeitliche Verstärkung = bessere Reizantwort vom Patienten"],
+
+["Behandlungsbegriffe","Fazilitieren","Bewegung organisieren, leichter machen"],
+["Behandlungsbegriffe","Bahnen","Ausbreitung des Aktionspotenzials aufgrund von Reizsummation (Irradiation)"],
+["Behandlungsbegriffe","Feedforward","Vorbereitung unterschiedlicher Systeme für die Bewegungsplanung (verbal, passiv, taktil …)"],
+["Behandlungsbegriffe","Feedback","Korrektur und Lob über die ausgeführte Handlung"],
+
+["Motorische Kontrolle","Nenne die 4 Stadien der motorischen Kontrolle in der richtigen Reihenfolge.",["1. Mobilität","2. Stabilität","3. Kontrollierte Mobilität","4. Geschicklichkeit"]],
+["Motorische Kontrolle","Stadium Mobilität","Funktionelle Bewegungen, um eine bestimmte Haltung einzunehmen"],
+["Motorische Kontrolle","Stadium Stabilität (beide Formen)",["Dynamische Stabilität = Haltungskontrolle während Bewegungen","Statische Stabilität = Position halten können"]],
+["Motorische Kontrolle","Stadium Kontrollierte Mobilität","Ein Bereich wird stabilisiert, um sich in anderen Körperteilen bewegen zu können"],
+["Motorische Kontrolle","Stadium Geschicklichkeit","Proximal wird stabilisiert, distal können zielmotorische Handlungen durchgeführt werden"],
+
+["Philosophie","Nenne die Punkte der PNF-Philosophie.",["Menschen als Ganzes sehen","Positive Approach","Reserven mobilisieren","Funktionell arbeiten","Intensives Übungsprogramm","Häufiges Wiederholen, verschiedene ASTEn","Wechsel der Aktivitätsfolge","Irradiation verwenden","Jeder Reiz wird beantwortet","Kein Schmerz"]],
+
+["Grundprinzipien","Welche exterozeptiven Grundprinzipien gibt es?",["Taktil (lumbrikaler Griff)","Visuell","Verbal"]],
+["Grundprinzipien","Welche 3 verbalen Kommandos unterscheidet man?",["Vorbereitungskommando","Aktionskommando","Korrekturkommando"]],
+["Grundprinzipien","Welche propriozeptiven Grundprinzipien gibt es?",["Dehnstimulus: größere Kontraktionsfähigkeit nach Stretch (IS oder RS)","Gelenkstimulus: Traktion oder Approximation"]],
+["Grundprinzipien","Was fördert Traktion, was Approximation?",["Traktion fördert Flexion","Approximation fördert Extension"]],
+["Grundprinzipien","Was bewirkt ein starker (angepasster) Widerstand?","Irradiation"],
+["Grundprinzipien","Timing: physiologisch vs. in der Therapie",["Physiologisches Timing: erst distal, dann proximal","In der Therapie: zuerst proximale Kontrolle erlernen"]],
+["Grundprinzipien","Timing for Emphasis","Irradiation von kräftigen Muskeln auf den schwachen Muskel (innerhalb der Kette) durch statischen Widerstand"],
+["Grundprinzipien","Ab welchem MFT: Rhythmische Bewegungseinleitung?","MFT 0–2"],
+["Grundprinzipien","Ab welchem MFT: Wiederholter Stretch am Anfang der Bewegung (IS)?","Ab MFT 1"],
+["Grundprinzipien","Ab welchem MFT: Wiederholter Stretch während der Bewegung (RS)?","Ab MFT 3"],
+["Grundprinzipien","Ab welchem MFT: COI?","MFT 3–4"],
+
+["IS / RS","Wofür stehen IS und RS?",["IS = wiederholter Stretch am Anfang der Bewegung (Initial Stretch)","RS = wiederholter Stretch auf dem Bewegungsweg (Restretch)"]],
+["IS / RS","Ziele IS",["Bewegung starten","Bewegung erlernen","Kontraktionsbereitschaft der Muskulatur verstärken","Antagonistische Reflexaktivität vermindern","Zu schnelle Ermüdung vermeiden"]],
+["IS / RS","Ziele RS",["Erweiterung der Bewegung","Kontraktionsbereitschaft der Muskulatur verstärken","Muskuläre Ermüdung","Antagonistische Reflexaktivität vermindern"]],
+["IS / RS","Kontraindikationen IS",["Gelenkinstabilität","Schmerzen","Frische Frakturen, Verletzungen an Muskel/Sehne, OPs","Nie am Kopf","Komplette Lähmungen","Spastikverstärkung"]],
+
+["Pattern","Scapula/Pelvis: Welche Bewegungen gehören zur Diagonale D1?","Depression posterior / Elevation anterior"],
+["Pattern","Scapula/Pelvis: Welche Bewegungen gehören zur Diagonale D2?","Depression anterior / Elevation posterior"],
+["Pattern","Armpattern D1 – Extension (Depression posterior)","Ext / Abd / IR / Pro / Ulnarabd. / HG Ext"],
+["Pattern","Armpattern D1 – Flexion (Elevation anterior)","Flex / Add / AR / Sup / Radialabd. / HG Flex"],
+["Pattern","Armpattern D2 – Extension (Depression anterior)","Ext / Add / IR / Pro / Ulnarabd. / HG Flex"],
+["Pattern","Armpattern D2 – Flexion (Elevation posterior)","Flex / Abd / AR / Sup / Radialabd. / HG Ext"],
+["Pattern","Beinpattern D1 – Extension (Depression posterior)","Ext / Abd / IR / PF / Pro / Zehenflex"],
+["Pattern","Beinpattern D1 – Flexion (Elevation anterior)","Flex / Add / AR / DE / Sup / Zehenext"],
+["Pattern","Beinpattern D2 – Extension (Depression anterior)","Ext / Add / AR / PF / Sup / Zehenflex"],
+["Pattern","Beinpattern D2 – Flexion (Elevation posterior)","Flex / Abd / IR / DE / Pro / Zehenext"],
+["Pattern","Armpattern: Welche Ellenbogenstellung ist möglich?","Ellenbogen-Extension oder -Flexion, beides möglich"],
+["Pattern","Kombi Scapula/Pelvis: ipsilateral symmetrisch","Scapula und Pelvis in dieselbe Richtung, z. B. beide a.E. oder beide p.D."],
+["Pattern","Kombi Scapula/Pelvis: reziprok","Scapula a.E. + Pelvis p.D."],
+["Pattern","Kombi Scapula/Pelvis: Massenextension","z. B. Scapula p.E. + Pelvis p.D."],
+["Pattern","Kombi Scapula/Pelvis: Massenflexion","z. B. Scapula a.D. + Pelvis a.E."],
+["Pattern","Bilaterales Extremitätenmuster: symmetrisch","Gleiche Extremität + dieselbe Diagonale + gleiche Richtung (unterschiedliche Seiten)"],
+["Pattern","Bilaterales Extremitätenmuster: asymmetrisch","Gleiche Extremität + verschiedene Diagonalen + gleiche Richtung (dieselbe Seite)"],
+["Pattern","Bilaterales Extremitätenmuster: reziprok","Gleiche Extremität + verschiedene Diagonalen + verschiedene Richtungen"],
+["Pattern","Nackenpattern: Komponenten und Besonderheit",["Flex / Lateralflex / Rot gleichsinnig","Ext / Lateralflex / Rot gleichsinnig","Kein IS!"]],
+["Pattern","Obere Rumpfmuster",["Lifting","Chopping"]],
+["Pattern","Untere Rumpfmuster",["Rumpfflexion","Rumpfextension"]],
+
+["Techniken","Agonistische Techniken (eine Richtung)",["Rhythmische Bewegungseinleitung","COI","Replikation","Wiederholter Stretch (IS / RS)"]],
+["Techniken","Antagonistische Techniken (beide Richtungen)",["Dynamische Umkehr","Stabilisierende Umkehr (Griffwechsel)","Rhythmische Stabilisation (Globalgriff)"]],
+["Techniken","Entspannungstechniken (Antagonisten)",["Hold Relax (statisch) bei Schmerz","Contract Relax (dynamisch) bei Verkürzung"]],
+["Techniken","Rhythmische Bewegungseinleitung: Ablauf","Passiv → assistiv → resistiv → aktiv"],
+["Techniken","Rhythmische Bewegungseinleitung: Ziele",["Bewegung erlernen","Intermuskuläre Koordination ↑","Tonus ↓","PNP ↑","Mobilität ↑","Wahrnehmung ↑"]],
+["Techniken","COI: Durchführung",["Beginn des Patterns in Zielrichtung","Kein Spannungsverlust!","Konzentrisch, exzentrisch und statisch möglich"]],
+["Techniken","COI: Ziele",["Inter-/intramuskuläre Koordination ↑","Exzentrische Kontrolle ↑","Kräftigung","Mobilität ↑"]],
+["Techniken","Replikation: Durchführung","Statischer Widerstand mind. 5 Sek. in bestimmter Position, zu der der Patient selbstständig zurückfinden soll"],
+["Techniken","Replikation: Ziele",["Wahrnehmung ↑","Schulung des Patterns"]],
+["Techniken","Wiederholter Stretch: Durchführung",["Restretch und Kommando gleichzeitig!","Keine Entspannung während und nach dem Stretch","Rotationskomponente!"]],
+["Techniken","Wiederholter Stretch: Ziele",["Kraft/Ausdauer ↑","Überwindung von Ermüdung","Erweiterung des Bewegungswegs","Reziproke Hemmung antagonistischer Reize"]],
+["Techniken","Dynamische Umkehr: Durchführung",["Beginn mit dem stärkeren Muster","Kein Spannungsverlust beim Wechseln","Hände nacheinander wechseln (erst distal, dann proximal)","Kein Stretch!","Beenden mit sukzessiver Induktion"]],
+["Techniken","Dynamische Umkehr: Ziele",["Intermuskuläre Koordination ↑","Kraft/Ausdauer ↑","Mobilität ↑"]],
+["Techniken","Stabilisierende Umkehr: Durchführung",["Beginn mit dem stärkeren Muster","Hände nacheinander wechseln (Griffwechsel)","Kommandos!","Rotationskomponente!","Distal arbeitet erst dynamisch","Beenden mit sukzessiver Induktion"]],
+["Techniken","Stabilisierende Umkehr: Ziele",["Stabilität ↑","Intermuskuläre Koordination ↑","Haltung/Balance ↑"]],
+["Techniken","Rhythmische Stabilisation: Durchführung",["Distal statisch halten, meist mit Approximation","Kein Griffwechsel (Globalgriff)","Ziel Stabilität ↑ → im schwächeren Muster enden","Ziel Schmerz ↓ / Bewegung ↑ → im stärkeren Muster enden"]],
+["Techniken","Rhythmische Stabilisation: Ziele",["Statische Muskelarbeit ↑","Kräftigung","Stabilität ↑","Intermuskuläre Koordination ↑","Tonus ↓","Schmerz ↓"]],
+["Techniken","Hold Relax: Durchführung",["Beginn in Zielbewegung, vor der Schmerzgrenze bleiben","Langsam aufbauender, leichter Widerstand in Gegenrichtung (7–10 Sek.)","Dann Entspannung","Mit Traktion in Zielrichtung (nicht passiv)"]],
+["Techniken","Hold Relax: Was tun, wenn bei PIR Schmerz auftritt?","Reziproke Hemmung nutzen (länger als 10 Sek. halten)"],
+["Techniken","Hold Relax: Ziele",["Schmerz ↓","Entspannung der Antagonisten","Mobilität ↑"]],
+["Techniken","Contract Relax: Durchführung",["Beginn in Zielbewegung bis zur Einschränkung","Dann Ermüdung der Antagonisten + Bewegungsauftrag!","Dann entspannen"]],
+["Techniken","Contract Relax: Ziele",["Entspannung/Dehnung der verkürzten Muskulatur","Mobilität ↑"]],
+["Techniken","Hold Relax oder Contract Relax: Was nutzt du bei Schmerz, was bei Verkürzung?",["Schmerz → Hold Relax (statisch)","Verkürzung → Contract Relax (dynamisch)"]],
+
+["Mattenarbeit","Ziele der Mattenarbeit",["Sicherheit des Patienten","Vertrauen (gleiche Ebene Therapeut/Patient)","Bewegungsübergänge im Alltag","Massenbewegungen → mehr Irradiation","Stimulation von Reflexen (vestibulär/postural)","Tiefensensibilität ↑","Vorbereitung Gang","Befundung/Analyse","Tonusregulation (Rotationsbewegungen)","Einsatz von Geräten","Hausaufgabenprogramm","Stadien der motorischen Kontrolle","Psychologischer Effekt"]],
+["Mattenarbeit","Nenne zwei Ausgangsstellungen aus dem Mattenprogramm.",["Hakenlage","Bridging"]],
+
+["Gang","Pathologische Gangmechanismen",["1. Deformität: keine passive Beweglichkeit","2. Muskelschwäche: Muskelkraft nicht ausreichend","3. Sensible Ausfälle: Propriozeption zu gering, daher wenig Sicherheit","4. Schmerzen: exzessive Gewebstraffheit, führt zu 1. und 2."]],
+["Gang","Phasen der Standphase",["IC – Initial Contact","LR – Loading Response","MST – Mid Stance","TST – Terminal Stance","PS – Pre Swing"]],
+["Gang","Phasen der Schwungphase",["IS – Initial Swing","MSW – Mid Swing","TSW – Terminal Swing"]],
+["Gang","IC (Initial Contact): % und Gelenkstellungen","0 % · Hüfte 20° Flex · Knie 5° Flex · Fuß 0°"],
+["Gang","LR (Loading Response): % und Gelenkstellungen","0–10 % · Hüfte 20° Flex · Knie 15° Flex · Fuß 5° Flex"],
+["Gang","MST (Mid Stance): % und Gelenkstellungen","10–30 % · Hüfte 0–5° · Knie 5° Flex · Fuß 0–5° Flex"],
+["Gang","TST (Terminal Stance): % und Gelenkstellungen","30–50 % · Hüfte 20° Ext · Knie 5° Flex · Fuß 10° Ext"],
+["Gang","PS (Pre Swing): % und Gelenkstellungen","50–60 % · Hüfte 10° Ext · Knie 40° Flex · Fuß 15° Flex"],
+["Gang","IS (Initial Swing): % und Gelenkstellungen","60–70 % · Hüfte 15° Flex · Knie 60° Flex · Fuß 5° Flex"],
+["Gang","MSW (Mid Swing): % und Gelenkstellungen","70–85 % · Hüfte 25° Flex · Knie 25° Flex · Fuß 0°"],
+["Gang","TSW (Terminal Swing): % und Gelenkstellungen","85–100 % · Hüfte 20° Flex · Knie 0–5° Flex · Fuß 0°"],
+["Gang","In welcher Gangphase hat das Knie die größte Flexion (60°)?","IS – Initial Swing"],
+
+["Behandlungsaufbau","Behandlungsaufbau nach PNF-Philosophie",["Positive Approach: problemfern beginnen","Reserven mobilisieren: verschiedene Positionen, Pattern","Motorisches Lernen: einfach beginnen","Stadien der motorischen Kontrolle","Funktionelles Training in höheren Positionen","Mattenarbeit","Gangschule","Positives Ende (Motivation)","Hausaufgaben","Retests"]],
+
+["Ashworth","Ashworth-Skala Stufe 0","Kein (erhöhter) Muskeltonus"],
+["Ashworth","Ashworth-Skala Stufe 1","Leichte Erhöhung, minimaler Widerstand am Ende der Bewegung"],
+["Ashworth","Ashworth-Skala Stufe 2","Spürbare Erhöhung des Muskeltonus"],
+["Ashworth","Ashworth-Skala Stufe 3","Deutliche Erhöhung des Muskeltonus, passives Bewegen schwierig"],
+["Ashworth","Ashworth-Skala Stufe 4","Dauerhafte Rigidität, passive Bewegung sehr schwierig"],
+
+["Testungen","Timed Up and Go: Durchführung","Aufstehen, 3 m gehen, umdrehen, zurück, hinsetzen"],
+["Testungen","Timed Up and Go: Normwerte",["Bis 65 J.: unter 10 Sek.","Über 65 J.: ca. 14 Sek.","Ab 30 Sek.: Patient braucht Hilfe in allen ADLs"]],
+["Testungen","Timed Walking Test: Varianten",["Kurze Distanz: 5, 10 oder 20 m","Ausdauertest: 2, 6 oder 12 min"]],
+["Testungen","Standing Balance Test nach Bohannon: Durchführung","Mit Schuhen, ohne Hilfsmittel, 3× durchführen"],
+["Testungen","Bohannon: Stufen 0–4",["0: Stehen unmöglich","1: Füße auseinander, unter 30 Sek.","2: Füße auseinander, über 30 Sek.","3: Füße zusammen, unter 30 Sek.","4: Füße zusammen, über 30 Sek. (sicheres Stehvermögen)"]],
+["Testungen","Bohannon Stufe 3","Stehen mit Füßen zusammen unter 30 Sek. möglich"]
+].map((c,i)=>({id:i,k:c[0],q:c[1],a:c[2]}));
+
+const CATS=[...new Set(C.map(c=>c.k))];
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let active=new Set(store.get("pnf-cats",CATS).filter(k=>CATS.includes(k)));
+if(!active.size)CATS.forEach(k=>active.add(k));
+let known=new Set(store.get("pnf-known",[]));
+let mode="learn", openTopic=null, cover=store.get("pnf-cover",false);
+const $=s=>document.querySelector(s);
+const esc=s=>s.replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const fmt=a=>Array.isArray(a)?"<ul>"+a.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":"<p>"+esc(a)+"</p>";
+const flat=a=>Array.isArray(a)?a.join(" · "):a;
+const saveKnown=()=>store.set("pnf-known",[...known]);
+const pool=()=>C.filter(c=>active.has(c.k));
+const toTop=()=>window.scrollTo({top:0});
+
+function setMode(m){
+  mode=m;document.querySelectorAll("nav.modes button").forEach(b=>b.setAttribute("aria-current",b.dataset.m===m));
+  start();toTop();
+}
+document.querySelectorAll("nav.modes button").forEach(b=>b.onclick=()=>{if(b.dataset.m==="learn")openTopic=null;setMode(b.dataset.m)});
+
+/* ---------- Lernen ---------- */
+function renderLearn(){
+  if(openTopic)return renderTopic(openTopic);
+  const tiles=CATS.map(k=>{
+    const all=C.filter(c=>c.k===k),d=all.filter(c=>known.has(c.id)).length;
+    return `<button class="topic" data-k="${esc(k)}"><b>${esc(k)}</b><span class="mini"><i style="width:${Math.round(d/all.length*100)}%"></i></span><span class="meta"><span>${all.length} Karten</span><span>${d} gewusst</span></span></button>`}).join("");
+  const d=known.size;
+  $("#stage").innerHTML=`<div class="stack">
+    <p class="sub">So lernst du am besten: Thema auswählen und durchlesen, dann mit den Karteikarten abfragen, zum Schluss das Quiz machen.</p>
+    <div class="progress"><span>${d} / ${C.length} gewusst</span><div class="bar"><i style="width:${d/C.length*100}%"></i></div></div>
+    <h2 class="sec">Themen</h2>
+    <div class="topics">${tiles}</div></div>`;
+  document.querySelectorAll(".topic").forEach(b=>b.onclick=()=>{openTopic=b.dataset.k;renderTopic(openTopic);toTop()});
+}
+function renderTopic(k){
+  const items=C.filter(c=>c.k===k),i=CATS.indexOf(k),next=CATS[i+1];
+  $("#stage").innerHTML=`<div class="stack">
+    <div class="toolbar"><button class="back" id="back">‹ Alle Themen</button>
+      <label class="switch"><input type="checkbox" id="cover" ${cover?"checked":""}> Antworten verdecken</label></div>
+    <div><div class="label">Thema ${i+1} von ${CATS.length}</div><h2 class="sec" style="font-size:26px">${esc(k)}</h2></div>
+    <div class="learn">${items.map(c=>`<div class="item ${cover?"hide":""}" data-id="${c.id}">
+      <p class="qq">${esc(c.q)}</p><button class="reveal">Antwort zeigen</button><div class="aa">${fmt(c.a)}</div>
+      ${known.has(c.id)?'<span class="knew">✓ gewusst</span>':""}</div>`).join("")}</div>
+    <button class="btn primary full" id="drill">Diese ${items.length} Karten abfragen</button>
+    ${next?`<button class="btn full" id="nextT">Nächstes Thema: ${esc(next)} ›</button>`:""}
+  </div>`;
+  $("#back").onclick=()=>{openTopic=null;renderLearn();toTop()};
+  $("#cover").onchange=e=>{cover=e.target.checked;store.set("pnf-cover",cover);document.querySelectorAll(".item").forEach(x=>x.classList.toggle("hide",cover))};
+  document.querySelectorAll(".reveal").forEach(b=>b.onclick=()=>b.closest(".item").classList.remove("hide"));
+  $("#drill").onclick=()=>{active=new Set([k]);store.set("pnf-cats",[...active]);setMode("cards")};
+  if(next)$("#nextT").onclick=()=>{openTopic=next;renderTopic(next);toTop()};
+}
+
+/* ---------- Themenfilter (Karten/Quiz) ---------- */
+function filterHTML(){
+  const n=pool().length;
+  const sum=active.size===CATS.length?"Alle Themen":active.size===1?[...active][0]:`${active.size} Themen`;
+  return `<details class="filter" id="filter"><summary><span>${esc(sum)}</span><span class="label">${n} Karten · ändern</span></summary>
+    <div class="fbody"><div class="chips">${CATS.map(k=>`<button class="chip" aria-pressed="${active.has(k)}" data-k="${esc(k)}">${esc(k)}<small>${C.filter(c=>c.k===k).length}</small></button>`).join("")}</div>
+    <button class="link" id="toggleAll">${active.size===CATS.length?"Alle abwählen":"Alle auswählen"}</button></div></details>`;
+}
+function bindFilter(){
+  const reopen=()=>{start();const f=$("#filter");if(f)f.open=true};
+  document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{const k=b.dataset.k;active.has(k)?active.delete(k):active.add(k);store.set("pnf-cats",[...active]);reopen()});
+  $("#toggleAll").onclick=()=>{if(active.size===CATS.length)active.clear();else CATS.forEach(k=>active.add(k));store.set("pnf-cats",[...active]);reopen()};
+}
+const emptyMsg=`<div class="card done"><p class="hint">Wähle oben mindestens ein Thema aus.</p></div>`;
+
+/* ---------- Karteikarten ---------- */
+let deck=[],flipped=false;
+function startCards(){deck=shuffle(pool().filter(c=>!known.has(c.id)));showCard()}
+function showCard(){
+  const p=pool(),done=p.filter(c=>known.has(c.id)).length;flipped=false;
+  let body;
+  if(!p.length)body=emptyMsg;
+  else if(!deck.length)body=`<div class="card done"><div class="big">${done}/${p.length}</div><p class="q">Alle Karten in dieser Auswahl gewusst.</p>
+      <button class="btn primary" id="reset">Nochmal von vorn</button><button class="btn" id="toQuiz">Weiter zum Quiz</button></div>`;
+  else{const c=deck[0];body=`<div class="card tap" id="card"><div class="cat">${esc(c.k)}</div><h2 class="q">${esc(c.q)}</h2>
+      <div id="slot"><p class="taphint">Überleg dir die Antwort, dann tippe auf die Karte.</p></div></div>
+      <div id="actions"><button class="btn primary full" id="flip">Antwort zeigen</button></div>
+      <p class="hint">Noch ${deck.length} Karte${deck.length===1?"":"n"}. Bei „Nochmal“ kommt die Karte ein paar Karten später wieder. <span class="desk">Tastatur: <span class="kbd">Leertaste</span> umdrehen, <span class="kbd">1</span> nochmal, <span class="kbd">2</span> gewusst.</span></p>`}
+  $("#stage").innerHTML=`<div class="stack">${filterHTML()}
+    <div class="progress"><span>${done} / ${p.length} gewusst</span><div class="bar"><i style="width:${p.length?done/p.length*100:0}%"></i></div></div>${body}</div>`;
+  bindFilter();
+  if($("#reset")){$("#reset").onclick=()=>{p.forEach(c=>known.delete(c.id));saveKnown();startCards()};$("#toQuiz").onclick=()=>setMode("quiz")}
+  if($("#flip")){$("#flip").onclick=flip;$("#card").onclick=()=>{if(!flipped)flip()}}
+}
+function flip(){
+  if(flipped||!deck.length)return;flipped=true;const c=deck[0];
+  $("#slot").innerHTML=`<div class="ans">${fmt(c.a)}</div>`;$("#card").classList.remove("tap");
+  $("#actions").innerHTML=`<div class="stack"><p class="hint" style="text-align:center">Wusstest du es?</p><div class="row"><button class="btn bad" id="no">Nochmal</button><button class="btn good" id="yes">Gewusst</button></div></div>`;
+  $("#yes").onclick=yes;$("#no").onclick=no;
+}
+function yes(){const c=deck.shift();known.add(c.id);saveKnown();showCard()}
+function no(){const c=deck.shift();deck.splice(Math.min(deck.length,3+(Math.random()*3|0)),0,c);showCard()}
+document.addEventListener("keydown",e=>{
+  if(mode==="cards"&&deck.length&&!e.target.closest("input,summary")){
+    if(e.code==="Space"&&!flipped){e.preventDefault();flip()}
+    else if(flipped&&e.key==="1")no();else if(flipped&&e.key==="2")yes();
+  }
+  if(mode==="quiz"&&!answered&&/^[1-4]$/.test(e.key)){const b=document.querySelectorAll(".opt")[+e.key-1];if(b)b.click()}
+  else if(mode==="quiz"&&answered&&e.key==="Enter"&&$("#nx")){e.preventDefault();$("#nx").click()}
+});
+
+/* ---------- Quiz ---------- */
+let qs=[],qi=0,score=0,wrong=[],answered=false;
+function startQuiz(){qs=shuffle(pool()).slice(0,Math.min(10,pool().length));qi=0;score=0;wrong=[];showQ()}
+function options(c){
+  const right=flat(c.a);
+  let others=C.filter(x=>x.k===c.k&&x.id!==c.id).map(x=>flat(x.a));
+  if(new Set(others.filter(o=>o!==right)).size<3)others=others.concat(shuffle(C.filter(x=>x.k!==c.k)).map(x=>flat(x.a)));
+  const ds=[];for(const o of shuffle(others)){if(o!==right&&!ds.includes(o))ds.push(o);if(ds.length===3)break}
+  return shuffle([right,...ds]);
+}
+function showQ(){
+  answered=false;const p=pool();let body,prog;
+  if(!p.length){body=emptyMsg;prog=""}
+  else if(qi>=qs.length){
+    prog=`<div class="progress"><span>${score} / ${qs.length} richtig</span><div class="bar"><i style="width:100%"></i></div></div>`;
+    body=`<div class="card done"><div class="big">${score}/${qs.length}</div><p class="q">${score===qs.length?"Alles richtig!":score>=qs.length*.7?"Gut gemacht.":"Da geht noch was."}</p>
+      ${wrong.length?`<div style="text-align:left;width:100%" class="ans"><div class="label" style="margin-bottom:8px">Das solltest du wiederholen</div><ul>${wrong.map(c=>`<li><b>${esc(c.q)}</b><br>${esc(flat(c.a))}</li>`).join("")}</ul></div>`:""}
+      <button class="btn primary full" id="again">Neue Runde</button></div>`;
+  }else{
+    const c=qs[qi],right=flat(c.a),opts=options(c);
+    prog=`<div class="progress"><span>Frage ${qi+1} / ${qs.length} · ${score} richtig</span><div class="bar"><i style="width:${qi/qs.length*100}%"></i></div></div>`;
+    body=`<div class="card"><div class="cat">${esc(c.k)}</div><h2 class="q">${esc(c.q)}</h2>
+      <div class="opts">${opts.map((o,i)=>`<button class="opt" data-i="${i}"><span class="l">${"ABCD"[i]}</span><span>${esc(o)}</span></button>`).join("")}</div><div id="next" class="stack"></div></div>`;
+    $("#stage").innerHTML=`<div class="stack">${filterHTML()}${prog}${body}</div>`;bindFilter();
+    document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+      if(answered)return;answered=true;
+      const ok=opts[b.dataset.i]===right;if(ok)score++;else wrong.push(c);
+      document.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(opts[x.dataset.i]===right)x.classList.add("right")});
+      if(!ok)b.classList.add("wrong");
+      $("#next").innerHTML=`<div class="feedback ${ok?"ok":"no"}">${ok?"✓ Richtig":"✗ Leider falsch. Richtig ist die grün markierte Antwort."}</div><button class="btn primary full" id="nx">${qi+1<qs.length?"Nächste Frage":"Auswertung"}</button>`;
+      $("#nx").onclick=()=>{qi++;showQ();toTop()};$("#nx").focus();
+    });
+    return;
+  }
+  $("#stage").innerHTML=`<div class="stack">${filterHTML()}${prog}${body}</div>`;bindFilter();
+  if($("#again"))$("#again").onclick=startQuiz;
+}
+function start(){mode==="learn"?renderLearn():mode==="cards"?startCards():startQuiz()}
+start();
+</script>
+
+</body></html>
